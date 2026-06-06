@@ -2,7 +2,7 @@
   "name": "Sicilia — Guide Audio",
   "short_name": "Sicilia",
   "description": "Guide audio GPS personnel pour la Sicile",
-  "start_url": "/",
+  "start_url": "/sicilia-guide/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1a1410",
