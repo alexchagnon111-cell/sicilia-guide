@@ -38,8 +38,6 @@
       gap: 10px;
       overflow: hidden;
     }
-
-    /* HEADER */
     header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .wordmark { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 600; letter-spacing: .12em; color: var(--gold); }
     .wordmark span { display: block; font-size: 9px; font-weight: 400; letter-spacing: .25em; color: var(--sienna); }
@@ -53,8 +51,6 @@
     .gps-dot.active { background: #4caf50; animation: pulse 2s infinite; }
     .gps-dot.error  { background: var(--sienna); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* NOW PLAYING */
     .now-playing {
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(212,168,75,.2);
@@ -62,7 +58,8 @@
     }
     .np-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: .3em; color: var(--gold); opacity: .7; margin-bottom: 8px; }
     .np-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; font-style: italic; color: var(--cream); margin-bottom: 4px; }
-    .np-sub { font-size: 11px; color: rgba(245,238,223,.4); }
+    .np-sub { font-size: 11px; color: rgba(245,238,223,.4); margin-bottom: 4px; }
+    .audio-badge { display: inline-block; font-size: 10px; color: var(--olive); letter-spacing: .05em; }
     .waveform { display: flex; align-items: center; gap: 3px; height: 30px; margin: 12px 0 10px; }
     .wb { flex: 1; border-radius: 2px; background: var(--gold); opacity: .25; height: 3px; }
     .waveform.playing .wb { opacity: .6; animation: wv 1.2s ease-in-out infinite; }
@@ -96,10 +93,8 @@
       border-radius: 20px; padding: 7px 12px; font-size: 12px;
       cursor: pointer; color: var(--cream);
     }
-
-    /* SCRIPT TEXT */
     .script-box {
-      flex: 0 0 120px;
+      flex: 0 0 100px;
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(255,255,255,.07);
       border-radius: 14px; padding: 14px;
@@ -108,9 +103,6 @@
     }
     .script-text { font-family: 'Cormorant Garamond', serif; font-size: 15px; line-height: 1.7; color: rgba(245,238,223,.75); }
     .script-empty { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-style: italic; color: rgba(245,238,223,.25); text-align: center; }
-    .highlight { color: var(--gold); }
-
-    /* SCRIPTS LIST */
     .queue-section { flex: 1; display: flex; flex-direction: column; min-height: 0; }
     .queue-label {
       font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: .3em;
@@ -137,14 +129,11 @@
     .qi-trigger { font-size: 10px; color: var(--sienna); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
     .qi-trigger.idle { color: var(--olive); }
     .qi-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--cream); }
-
-    /* STATUS */
+    .qi-audio { font-size: 10px; color: var(--olive); }
     .status-bar { font-size: 10px; color: rgba(245,238,223,.3); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .status-bar.loading { color: var(--gold); }
     .status-bar.ready   { color: var(--olive); }
     .status-bar.error   { color: var(--sienna); }
-
-    /* TOAST */
     .toast {
       position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(10px);
       background: rgba(26,20,16,.95); border: 1px solid rgba(212,168,75,.2);
@@ -153,8 +142,6 @@
       pointer-events: none; white-space: nowrap; z-index: 100;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* MODAL */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
@@ -207,6 +194,7 @@
     <div class="np-label">EN COURS</div>
     <div class="np-title" id="npTitle">Sélectionner un script</div>
     <div class="np-sub" id="npSub">Choisissez un script ci-dessous</div>
+    <div class="audio-badge" id="audioBadge"></div>
     <div class="waveform" id="waveform">
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
       <div class="wb"></div><div class="wb"></div><div class="wb"></div>
@@ -270,8 +258,12 @@
       <div class="form-group"><label>Silence minimum (sec)</label><input type="number" id="fIdle" value="120" /></div>
     </div>
     <div class="form-group">
+      <label>Fichier audio (optionnel, ex: audio/s1.mp3)</label>
+      <input type="text" id="fAudio" placeholder="audio/nom-du-fichier.mp3" />
+    </div>
+    <div class="form-group">
       <label>Texte du script</label>
-      <textarea id="fScript" placeholder="Texte lu à voix haute…"></textarea>
+      <textarea id="fScript" placeholder="Texte affiché pendant la lecture…"></textarea>
     </div>
     <button class="btn-save" onclick="saveScript()">Enregistrer</button>
   </div>
@@ -281,8 +273,8 @@
 // ── DATA ──
 const DEFAULT_SCRIPTS = [
   { id:'s1', title:'Vallée des Temples', played:false, priority:1,
+    audio:'audio/test1.mp3',
     trigger:{ type:'gps', lat:37.2909, lng:13.5881, radius:300 },
-    audio:'audio/test1.mp3'
     script:"Devant vous s'élèvent les temples doriques de la Vallée des Temples, inscrits au patrimoine mondial de l'UNESCO. Construits entre le sixième et le cinquième siècle avant notre ère, ils comptent parmi les exemples les mieux conservés de l'architecture grecque antique. Le Temple de la Concorde, encore presque intact, fut transformé en église chrétienne au septième siècle — ce qui explique sa remarquable préservation." },
   { id:'s2', title:'Palermo — Palais des Normands', played:false, priority:1,
     trigger:{ type:'gps', lat:38.1121, lng:13.3520, radius:250 },
@@ -298,22 +290,16 @@ const DEFAULT_SCRIPTS = [
     script:"Le Théâtre Antique de Taormine offre une des vues les plus spectaculaires du monde. Construit par les Grecs au troisième siècle avant notre ère, il pouvait accueillir jusqu'à cinq mille spectateurs. Depuis les gradins, par temps clair, vous distinguez l'Etna enneigé d'un côté, et la mer Ionienne de l'autre." }
 ];
 
-let scripts = [];
-try {
-  const saved = localStorage.getItem('sicilia_scripts');
-  scripts = saved ? JSON.parse(saved) : DEFAULT_SCRIPTS;
-} catch(e) { scripts = DEFAULT_SCRIPTS; }
-
-function saveScripts() {
-  try { localStorage.setItem('sicilia_scripts', JSON.stringify(scripts)); } catch(e) {}
-}
+// Toujours repartir des defaults (évite corruption localStorage)
+let scripts = DEFAULT_SCRIPTS.slice();
 
 // ── STATE ──
 let current = null, isPlaying = false, gpsActive = false;
 let gpsWatchId = null, currentPos = null;
 let idleTimer = null, idleSecs = 0;
 let ttsReady = false, ttsLoading = false;
-let utterance = null, speechSpeed = 1, speedIdx = 1;
+let audioEl = null, utterance = null;
+let speechSpeed = 1, speedIdx = 1;
 const speeds = [0.8, 1, 1.1, 1.25];
 let pipeline = null, audioCtx = null;
 
@@ -321,19 +307,17 @@ let pipeline = null, audioCtx = null;
 function renderQueue() {
   const el = document.getElementById('queueScroll');
   el.innerHTML = '';
-  if (!scripts.length) {
-    el.innerHTML = '<div style="color:rgba(245,238,223,.3);font-size:13px;padding:12px">Aucun script. Appuyez sur + AJOUTER.</div>';
-    return;
-  }
   scripts.forEach(s => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (current?.id===s.id?' active':'') + (s.played?' played':'');
     const icon = s.trigger.type==='gps' ? '📍' : s.trigger.type==='idle' ? '🕐' : '👆';
     const trigLabel = s.trigger.type==='gps' ? 'GPS' : s.trigger.type==='idle' ? 'Temps mort' : 'Manuel';
+    const audioTag = s.audio ? '<div class="qi-audio">🎵 MP3</div>' : '';
     div.innerHTML = `<div class="qi-icon">${icon}</div>
       <div class="qi-info">
         <div class="qi-trigger ${s.trigger.type==='idle'?'idle':''}">${trigLabel}</div>
         <div class="qi-name">${s.title}</div>
+        ${audioTag}
       </div>`;
     div.onclick = () => selectScript(s.id);
     el.appendChild(div);
@@ -348,54 +332,47 @@ function selectScript(id) {
   const sub = s.trigger.type==='gps' ? `GPS · rayon ${s.trigger.radius}m`
     : s.trigger.type==='idle' ? `Temps mort · ${s.trigger.min_silence_sec}s` : 'Manuel';
   document.getElementById('npSub').textContent = sub;
-  document.getElementById('scriptText').innerHTML = s.script;
-  if (isPlaying) { stopSpeech(); isPlaying=false; updateBtn(); }
+  document.getElementById('audioBadge').textContent = s.audio ? '🎵 Fichier MP3' : '🔊 TTS synthèse';
+  document.getElementById('scriptText').innerHTML = s.script || '<div class="script-empty">Lecture audio…</div>';
+  if (isPlaying) { stopAll(); isPlaying=false; updateBtn(); }
   renderQueue();
 }
 
-// ── TTS ──
+// ── AUDIO MP3 ──
+function playMP3(path) {
+  stopAll();
+  audioEl = new Audio(path);
+  audioEl.playbackRate = speechSpeed;
+  audioEl.onended = onEnded;
+  audioEl.onerror = () => {
+    showToast('MP3 introuvable — TTS activé');
+    setStatus('error', 'Fichier audio manquant');
+    speakFallback(current.script);
+  };
+  setWave(true);
+  audioEl.play().catch(e => {
+    showToast('Erreur lecture audio');
+    console.error(e);
+  });
+}
+
+// ── TTS FALLBACK ──
 async function initTTS() {
   if (ttsLoading || ttsReady) return;
   ttsLoading = true;
-  setStatus('loading', 'Chargement Kokoro…');
+  setStatus('loading', 'Chargement TTS…');
   try {
     const { pipeline: fn, env } = await import(
       'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/dist/transformers.min.js'
     );
     env.allowLocalModels = false;
-    setStatus('loading', 'Téléchargement modèle (~80 Mo, une seule fois)…');
     pipeline = await fn('text-to-speech', 'onnx-community/Kokoro-82M-v1.0', { dtype:'fp32', device:'wasm' });
     ttsReady = true; ttsLoading = false;
-    setStatus('ready', 'Kokoro prêt ✓');
-    showToast('🎙 Voix naturelle activée');
+    setStatus('ready', 'TTS prêt');
   } catch(e) {
-    console.warn('Kokoro failed, using Web Speech', e);
     ttsLoading = false; ttsReady = 'fallback';
     setStatus('ready', 'Web Speech activé');
   }
-}
-
-async function speakText(text) {
-  if (!ttsReady) await initTTS();
-  stopSpeech();
-  setWave(true);
-  if (ttsReady===true && pipeline) await speakKokoro(text);
-  else speakFallback(text);
-}
-
-async function speakKokoro(text) {
-  try {
-    const r = await pipeline(text, { voice:'fr_siwis' });
-    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-    if (audioCtx.state==='suspended') await audioCtx.resume();
-    const buf = audioCtx.createBuffer(1, r.audio.length, r.sampling_rate);
-    buf.copyToChannel(r.audio, 0);
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf; src.playbackRate.value = speechSpeed;
-    src.connect(audioCtx.destination);
-    src.onended = onEnded;
-    utterance = src; src.start();
-  } catch(e) { speakFallback(text); }
 }
 
 function speakFallback(text) {
@@ -404,46 +381,58 @@ function speakFallback(text) {
   u.onend = onEnded;
   utterance = u;
   speechSynthesis.speak(u);
+  setWave(true);
 }
 
-function stopSpeech() {
+function stopAll() {
+  // Stop MP3
+  if (audioEl) { audioEl.pause(); audioEl.src=''; audioEl=null; }
+  // Stop TTS
   speechSynthesis.cancel();
-  if (utterance?.stop) try { utterance.stop(); } catch(e) {}
-  utterance = null; setWave(false);
+  if (utterance) utterance=null;
+  setWave(false);
 }
 
 function onEnded() {
   isPlaying=false; updateBtn(); setWave(false);
-  if (current) { current.played=true; saveScripts(); renderQueue(); }
+  if (current) current.played=true;
+  renderQueue();
   resetIdle();
 }
 
 // ── CONTROLS ──
 function togglePlay() {
   if (!current) { showToast('Sélectionnez un script'); return; }
-  if (isPlaying) { pauseSpeech(); }
-  else { startSpeech(); }
+  if (isPlaying) { pauseAll(); }
+  else { startPlay(); }
 }
 
-function startSpeech() {
+function startPlay() {
   if (!current) return;
-  initTTS();
   isPlaying=true; updateBtn();
-  current.played=true; saveScripts(); renderQueue();
-  speakText(current.script);
+  current.played=true; renderQueue();
+  if (current.audio) {
+    playMP3(current.audio);
+  } else {
+    initTTS();
+    speakFallback(current.script);
+  }
   resetIdle();
 }
 
-function pauseSpeech() {
-  if (ttsReady===true) { if(utterance?.stop) try{utterance.stop()}catch(e){} }
+function pauseAll() {
+  if (audioEl) audioEl.pause();
   else speechSynthesis.pause();
   isPlaying=false; updateBtn(); setWave(false);
 }
 
-function skipBack() { stopSpeech(); isPlaying=false; updateBtn(); showToast('Rembobiné'); }
+function skipBack() {
+  stopAll(); isPlaying=false; updateBtn();
+  showToast('Rembobiné');
+}
 
 function skipNext() {
-  stopSpeech();
+  stopAll();
   const next = scripts.find(s => !s.played && s.id!==current?.id);
   if (next) { selectScript(next.id); showToast('→ '+next.title); }
   else showToast('Fin de la file');
@@ -452,27 +441,24 @@ function skipNext() {
 function cycleSpeed() {
   speedIdx=(speedIdx+1)%speeds.length;
   speechSpeed=speeds[speedIdx];
+  if (audioEl) audioEl.playbackRate=speechSpeed;
   document.getElementById('speedBtn').textContent=speechSpeed+'×';
   showToast('Vitesse : '+speechSpeed+'×');
 }
 
-function updateBtn() {
-  document.getElementById('btnPlay').textContent = isPlaying ? '⏸' : '▶';
-}
+function updateBtn() { document.getElementById('btnPlay').textContent = isPlaying ? '⏸' : '▶'; }
 function setWave(on) { document.getElementById('waveform').classList.toggle('playing',on); }
 
 // ── GPS ──
 function toggleGPS() { gpsActive ? stopGPS() : startGPS(); }
-
 function startGPS() {
   if (!navigator.geolocation) { showToast('GPS non disponible'); return; }
   gpsActive=true;
   document.getElementById('gpsDot').className='gps-dot active';
   document.getElementById('gpsLabel').textContent='GPS actif';
   gpsWatchId = navigator.geolocation.watchPosition(onPos, onGPSErr, { enableHighAccuracy:true, maximumAge:5000, timeout:15000 });
-  resetIdle(); initTTS();
+  resetIdle();
 }
-
 function stopGPS() {
   gpsActive=false;
   if (gpsWatchId!==null) navigator.geolocation.clearWatch(gpsWatchId);
@@ -480,7 +466,6 @@ function stopGPS() {
   document.getElementById('gpsDot').className='gps-dot';
   document.getElementById('gpsLabel').textContent='GPS off';
 }
-
 function onPos(pos) {
   currentPos={ lat:pos.coords.latitude, lng:pos.coords.longitude };
   document.getElementById('gpsLabel').textContent='±'+Math.round(pos.coords.accuracy)+'m';
@@ -490,81 +475,77 @@ function onGPSErr() {
   document.getElementById('gpsDot').className='gps-dot error';
   document.getElementById('gpsLabel').textContent='Erreur GPS';
 }
-
-function haversine(a, b, c, d) {
-  const R=6371000, r=Math.PI/180;
-  const dL=(c-a)*r, dG=(d-b)*r;
+function haversine(a,b,c,d) {
+  const R=6371000,r=Math.PI/180;
+  const dL=(c-a)*r,dG=(d-b)*r;
   const x=Math.sin(dL/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dG/2)**2;
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
-
 function checkGPS() {
-  if (!currentPos || isPlaying) return;
-  const hit = scripts
-    .filter(s=>s.trigger.type==='gps'&&!s.played)
+  if (!currentPos||isPlaying) return;
+  const hit=scripts.filter(s=>s.trigger.type==='gps'&&!s.played)
     .filter(s=>haversine(currentPos.lat,currentPos.lng,s.trigger.lat,s.trigger.lng)<=s.trigger.radius)
     .sort((a,b)=>a.priority-b.priority)[0];
-  if (hit) { selectScript(hit.id); showToast('📍 '+hit.title); startSpeech(); }
+  if (hit) { selectScript(hit.id); showToast('📍 '+hit.title); startPlay(); }
 }
 
 // ── IDLE ──
 function resetIdle() {
   clearInterval(idleTimer); idleSecs=0;
-  idleTimer = setInterval(()=>{
-    if (isPlaying) { idleSecs=0; return; }
+  idleTimer=setInterval(()=>{
+    if (isPlaying){idleSecs=0;return;}
     idleSecs++;
-    const hit = scripts.filter(s=>s.trigger.type==='idle'&&!s.played)
+    const hit=scripts.filter(s=>s.trigger.type==='idle'&&!s.played)
       .find(s=>idleSecs>=s.trigger.min_silence_sec);
-    if (hit) { selectScript(hit.id); showToast('🕐 Contenu de remplissage'); startSpeech(); }
-  }, 1000);
+    if (hit){selectScript(hit.id);showToast('🕐 Contenu de remplissage');startPlay();}
+  },1000);
 }
 
 // ── MODAL ──
-function openModal() { document.getElementById('modalOverlay').classList.add('open'); }
-function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
-function closeBg(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
-function updateFields() {
+function openModal(){document.getElementById('modalOverlay').classList.add('open');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeBg(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+function updateFields(){
   const t=document.getElementById('fType').value;
   document.getElementById('gpsFields').style.display=t==='gps'?'':'none';
   document.getElementById('idleFields').style.display=t==='idle'?'':'none';
 }
-function saveScript() {
+function saveScript(){
   const title=document.getElementById('fTitle').value.trim();
   const script=document.getElementById('fScript').value.trim();
+  const audio=document.getElementById('fAudio').value.trim();
   const type=document.getElementById('fType').value;
-  if (!title||!script) { showToast('Titre et script requis'); return; }
-  const s = { id:'s'+Date.now(), title, script, played:false, priority:3,
-    trigger: type==='gps' ? { type:'gps',
+  if(!title){showToast('Titre requis');return;}
+  const s={id:'s'+Date.now(),title,script,played:false,priority:3,
+    audio:audio||null,
+    trigger:type==='gps'?{type:'gps',
       lat:parseFloat(document.getElementById('fLat').value),
       lng:parseFloat(document.getElementById('fLng').value),
       radius:parseInt(document.getElementById('fRadius').value)||200
-    } : type==='idle' ? { type:'idle', min_silence_sec:parseInt(document.getElementById('fIdle').value)||120 }
-    : { type:'manual' }
+    }:type==='idle'?{type:'idle',min_silence_sec:parseInt(document.getElementById('fIdle').value)||120}
+    :{type:'manual'}
   };
-  scripts.push(s); saveScripts(); renderQueue(); closeModal();
-  showToast('Script ajouté ✓');
+  scripts.push(s);renderQueue();closeModal();showToast('Script ajouté ✓');
   document.getElementById('fTitle').value='';
   document.getElementById('fScript').value='';
+  document.getElementById('fAudio').value='';
 }
 
 // ── HELPERS ──
-function setStatus(state,text) {
+function setStatus(state,text){
   document.getElementById('statusBar').className='status-bar '+state;
   document.getElementById('statusText').textContent=text;
 }
 let toastT;
-function showToast(msg) {
+function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2500);
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', ()=>{
-  renderQueue();
-  document.addEventListener('touchstart', ()=>{ if(!ttsReady&&!ttsLoading) initTTS(); }, {once:true});
-});
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+document.addEventListener('DOMContentLoaded',()=>{ renderQueue(); });
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
